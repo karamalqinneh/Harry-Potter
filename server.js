@@ -4,11 +4,15 @@ const app = express();
 const dotenv = require("dotenv");
 const characterData = require("./mainData/data.json");
 const axios = require("axios");
+const pg = require("pg");
 
-// middlewares
+// middlewares & environmental variables
+app.use(express.json());
 dotenv.config();
 const PORT = process.env.PORT;
 app.use(errorHandler);
+const DATABASE_URL = process.env.DATABASE_URL;
+const client = new pg.Client(DATABASE_URL);
 
 // constructor to handle the incoming data
 class Character {
@@ -24,6 +28,7 @@ class Character {
 // endpoints
 app.get("/", homePageHandler);
 app.get("/allCharacters", getAllCharacters);
+app.post("/addCharacters", addCharactersHandler);
 app.get("*", pageNotFoundHandler);
 
 // endpoints handlers
@@ -61,6 +66,23 @@ async function getAllCharacters(req, res) {
   return res.status(200).json(apiData);
 }
 
+function addCharactersHandler(req, res) {
+  let char = req.body;
+  console.log(req);
+  let sql = `INSERT INTO harryPotterCharacters(CharacterName, house,ancestry,patronus,imageURL) VALUES($1, $2, $3, $4, $5) RETURNING *;`;
+  let values = [
+    char.name,
+    char.house,
+    char.ancestry,
+    char.patronus,
+    char.image,
+  ];
+
+  client.query(sql, values).then((data) => {
+    return res.status(200).json(data.rows);
+  });
+}
+
 function pageNotFoundHandler(req, res) {
   return res.status(404).send({
     status: 404,
@@ -73,6 +95,8 @@ function errorHandler(err, req, res, next) {
 }
 
 // app.listen
-app.listen(PORT, () => {
-  console.log(`listening to port ${PORT}`);
+client.connect().then(() => {
+  app.listen(PORT, () => {
+    console.log(`listening to port ${PORT}`);
+  });
 });
