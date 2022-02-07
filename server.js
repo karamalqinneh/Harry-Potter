@@ -2,9 +2,9 @@
 const express = require("express");
 const app = express();
 const dotenv = require("dotenv");
-const characterData = require("./mainData/data.json");
 const axios = require("axios");
 const pg = require("pg");
+const characterData = require("./mainData/data.json");
 
 // middlewares & environmental variables
 app.use(express.json());
